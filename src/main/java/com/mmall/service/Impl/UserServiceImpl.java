@@ -100,10 +100,38 @@ public class UserServiceImpl implements IUserService {
         int resultCount = userMapper.checkAnswer(username, question, answer);
         if(resultCount > 0) {
             String forgetToken = UUID.randomUUID().toString();
-            TokenCache.setKey("token_"+username, forgetToken);
+            TokenCache.setKey(TokenCache.TOKEN_PREFIX+username, forgetToken);
             return ServerResponse.createBySuccess(forgetToken);
         }
 
         return ServerResponse.createByErrorMessage("Wrong answer");
+    }
+
+    public ServerResponse<String> forgetResetPassword(String username, String passwordNew, String forgetToken) {
+        if(StringUtils.isBlank(forgetToken)) {
+            return ServerResponse.createByErrorMessage("Blank token");
+        }
+
+        ServerResponse validResponse = this.checkValid(username, Const.USERNAME);
+        if(!validResponse.isSuccess()) {
+            return validResponse;
+        }
+
+        String token = TokenCache.getKey(TokenCache.TOKEN_PREFIX+username);
+        if(StringUtils.isBlank(token)) {
+            return ServerResponse.createByErrorMessage("Invalid or expired token");
+        }
+
+        if(StringUtils.equals(forgetToken, token)) {
+            String md5Password = MD5Util.MD5EncodeUtf8(passwordNew);
+            int rowCount = userMapper.updatePasswordByUsername(username, md5Password);
+
+            if(rowCount > 0) {
+                return ServerResponse.createBySuccessMessage("Reset password successfully");
+            }
+        } else {
+            return ServerResponse.createByErrorMessage("Wrong token");
+        }
+        return ServerResponse.createByErrorMessage("Reset password unsuccessfully");
     }
 }
