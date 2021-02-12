@@ -86,4 +86,33 @@ public class UserController {
     public ServerResponse<String> forgetResetPassword(String username, String passwordNew, String forgetToken) {
         return iUserService.forgetResetPassword(username, passwordNew, forgetToken);
     }
+
+    @RequestMapping(value = "reset_password.do", method = RequestMethod.GET)
+    @ResponseBody
+    public ServerResponse<String> ResetPassword(HttpSession session, String passwordOld, String passwordNew) {
+        User user = (User) session.getAttribute(Const.CURRENT_USER);
+        if(user == null) {
+            return ServerResponse.createByErrorMessage("User not found");
+        }
+        return iUserService.resetPassword(passwordOld, passwordNew, user);
+    }
+
+    @RequestMapping(value = "update_information.do", method = RequestMethod.GET)
+    @ResponseBody
+    public ServerResponse<User> updateInformation(HttpSession session, User user) {
+        User current_user = (User) session.getAttribute(Const.CURRENT_USER);
+        if(current_user == null) {
+            return ServerResponse.createByErrorMessage("User not login");
+        }
+
+        user.setId(current_user.getId());
+        user.setUsername(current_user.getUsername());
+
+        ServerResponse<User> response = iUserService.updateInformation(user);
+        if(response.isSuccess()) {
+            session.setAttribute(Const.CURRENT_USER, response.getData());
+        }
+        return response;
+    }
+
 }

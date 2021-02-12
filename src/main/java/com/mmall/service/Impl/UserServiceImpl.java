@@ -134,4 +134,42 @@ public class UserServiceImpl implements IUserService {
         }
         return ServerResponse.createByErrorMessage("Reset password unsuccessfully");
     }
+
+    public ServerResponse<String> resetPassword(String passwordOld, String passwordNew, User user) {
+        int resultCount = userMapper.checkPassword(MD5Util.MD5EncodeUtf8(passwordOld), user.getId());
+        if(resultCount == 0) {
+            return ServerResponse.createByErrorMessage("Wrong password");
+        }
+
+        user.setPassword(MD5Util.MD5EncodeUtf8(passwordNew));
+        int updateCount = userMapper.updateByPrimaryKey(user);
+        if(updateCount > 0) {
+            return ServerResponse.createBySuccessMessage("Reset Password successfully");
+        }
+
+        return ServerResponse.createByErrorMessage("Reset password unsuccessfully");
+    }
+
+    public ServerResponse<User> updateInformation(User user) {
+        //username can't be updated, email can't be the same
+        int resultCount = userMapper.checkEmailByUserId(user.getEmail(), user.getId());
+        if(resultCount > 0) {
+            return ServerResponse.createByErrorMessage("Email already existed");
+        }
+
+        User updateUser = new User();
+        updateUser.setId(user.getId());
+        updateUser.setEmail(user.getEmail());
+        updateUser.setPhone(user.getPhone());
+        updateUser.setQuestion(user.getQuestion());
+        updateUser.setAnswer(user.getAnswer());
+
+        int updateCount = userMapper.updateByPrimaryKey(updateUser);
+        if(updateCount > 0) {
+            return ServerResponse.createBySuccess("Update Information successfully", updateUser);
+        }
+
+        return ServerResponse.createByErrorMessage("Update Information unsuccessfully");
+
+    }
 }
