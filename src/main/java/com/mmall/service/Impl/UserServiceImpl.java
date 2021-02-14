@@ -26,7 +26,6 @@ public class UserServiceImpl implements IUserService {
             return ServerResponse.createByErrorMessage("User Not Found");
         }
 
-        //todo login with MD5
         String md5Password = MD5Util.MD5EncodeUtf8(password);
         User user = userMapper.selectLogin(username, md5Password);
         if(user == null) {
@@ -171,5 +170,23 @@ public class UserServiceImpl implements IUserService {
 
         return ServerResponse.createByErrorMessage("Update Information unsuccessfully");
 
+    }
+
+    public ServerResponse<User> getInformation(Integer userId) {
+        User user = userMapper.selectByPrimaryKey(userId);
+        if(user == null) {
+            return ServerResponse.createByErrorMessage("User not found");
+        }
+        user.setPassword(StringUtils.EMPTY);
+        return ServerResponse.createBySuccess(user);
+    }
+
+
+    // Backend
+    public ServerResponse checkAdminRole(User user){
+        if(user != null && user.getRole().intValue() == Const.Role.ROLE_ADMIN) {
+            return ServerResponse.createBySuccess();
+        }
+        return ServerResponse.createByError();
     }
 }
